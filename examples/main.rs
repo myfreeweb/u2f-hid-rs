@@ -3,10 +3,9 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 extern crate base64;
-extern crate crypto;
+extern crate sha2;
 extern crate u2fhid;
-use crypto::digest::Digest;
-use crypto::sha2::Sha256;
+use sha2::{Sha256, Digest};
 use std::io;
 use std::sync::mpsc::channel;
 use u2fhid::U2FManager;
@@ -39,14 +38,12 @@ fn main() {
         r#"{"challenge": "1vQ9mxionq0ngCnjD-wTsv1zUSrGRtFqG2xP09SbZ70","#,
         r#" "version": "U2F_V2", "appId": "http://demo.yubico.com"}"#);
     let mut challenge = Sha256::new();
-    challenge.input_str(&challenge_str);
-    let mut chall_bytes: Vec<u8> = vec![0; challenge.output_bytes()];
-    challenge.result(&mut chall_bytes);
+    challenge.input(challenge_str.as_bytes());
+    let chall_bytes = Vec::from(challenge.result().as_slice());
 
     let mut application = Sha256::new();
-    application.input_str("http://demo.yubico.com");
-    let mut app_bytes: Vec<u8> = vec![0; application.output_bytes()];
-    application.result(&mut app_bytes);
+    application.input("http://demo.yubico.com".as_bytes());
+    let app_bytes = Vec::from(application.result().as_slice());
 
     let manager = U2FManager::new().unwrap();
 
