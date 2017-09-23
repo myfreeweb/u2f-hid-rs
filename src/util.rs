@@ -35,10 +35,20 @@ impl Signed for usize {
     }
 }
 
-#[cfg(any(target_os = "linux"))]
+#[cfg(target_os = "linux")]
 pub fn from_unix_result<T: Signed>(rv: T) -> io::Result<T> {
     if rv.is_negative() {
         let errno = unsafe { *libc::__errno_location() };
+        Err(io::Error::from_raw_os_error(errno))
+    } else {
+        Ok(rv)
+    }
+}
+
+#[cfg(target_os = "freebsd")]
+pub fn from_unix_result<T: Signed>(rv: T) -> io::Result<T> {
+    if rv.is_negative() {
+        let errno = unsafe { *libc::__error() };
         Err(io::Error::from_raw_os_error(errno))
     } else {
         Ok(rv)
